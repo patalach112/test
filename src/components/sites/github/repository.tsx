@@ -1,61 +1,1274 @@
 "use client";
 
 import Link from "next/link";
+import Markdown from "react-markdown";
+import { AccountMenu } from "@/components/auth/account-menu";
 import { useEffect, useRef, useState } from "react";
-import { Menu, Search, Plus, ChevronDown, Code, CircleDot, GitPullRequest, PlayCircle, Table2, Shield, ChartNoAxesCombined, Settings, BookOpen, GitFork, Star, Eye, GitBranch, Tag, History, Folder, File, Copy, Download, ExternalLink, X, Check, List, Scale, Heart, Bell, ArrowLeft, Monitor, Terminal, Users, Inbox } from "lucide-react";
+import {
+  Menu,
+  Search,
+  Plus,
+  ChevronDown,
+  Code,
+  CircleDot,
+  GitPullRequest,
+  PlayCircle,
+  Table2,
+  Shield,
+  ChartNoAxesCombined,
+  Settings,
+  BookOpen,
+  GitFork,
+  Star,
+  Eye,
+  GitBranch,
+  Tag,
+  History,
+  Folder,
+  File,
+  Copy,
+  Download,
+  ExternalLink,
+  X,
+  Check,
+  List,
+  Scale,
+  Heart,
+  Bell,
+  ArrowLeft,
+  Monitor,
+  Terminal,
+  Users,
+  Inbox,
+} from "lucide-react";
 import data from "./data.json";
 import { readme } from "./readme";
 
-function Mark({ small = false }: { small?: boolean }) { return <svg height={small ? 24 : 32} width={small ? 24 : 32} viewBox="0 0 24 24" fill="currentColor" aria-label="GitHub"><path d="M12 .75a11.25 11.25 0 0 0-3.558 21.922c.563.104.769-.244.769-.542 0-.267-.01-.975-.016-1.914-3.13.68-3.791-1.51-3.791-1.51-.512-1.3-1.25-1.646-1.25-1.646-1.022-.7.078-.686.078-.686 1.13.08 1.725 1.16 1.725 1.16 1.005 1.723 2.638 1.225 3.28.937.102-.728.393-1.225.715-1.507-2.498-.284-5.124-1.249-5.124-5.56 0-1.228.439-2.232 1.16-3.019-.116-.285-.503-1.43.11-2.98 0 0 .945-.303 3.094 1.153A10.79 10.79 0 0 1 12 6.18c.956.004 1.919.13 2.818.379 2.148-1.456 3.09-1.153 3.09-1.153.615 1.55.228 2.695.112 2.98.723.787 1.158 1.79 1.158 3.02 0 4.322-2.63 5.272-5.136 5.55.404.35.765 1.04.765 2.095 0 1.512-.014 2.732-.014 3.103 0 .3.203.65.774.54A11.252 11.252 0 0 0 12 .75Z"/></svg>; }
-const tabs = [{name:"Code",icon:Code},{name:"Issues",icon:CircleDot},{name:"Pull requests",icon:GitPullRequest},{name:"Actions",icon:PlayCircle},{name:"Projects",icon:Table2},{name:"Security",icon:Shield},{name:"Insights",icon:ChartNoAxesCombined},{name:"Settings",icon:Settings}];
-const rootItems = data.items;
-const fileContents: Record<string,string> = data.files;
+function Mark({ small = false }: { small?: boolean }) {
+  return (
+    <svg
+      height={small ? 24 : 32}
+      width={small ? 24 : 32}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-label="GitHub"
+    >
+      <path d="M12 .75a11.25 11.25 0 0 0-3.558 21.922c.563.104.769-.244.769-.542 0-.267-.01-.975-.016-1.914-3.13.68-3.791-1.51-3.791-1.51-.512-1.3-1.25-1.646-1.25-1.646-1.022-.7.078-.686.078-.686 1.13.08 1.725 1.16 1.725 1.16 1.005 1.723 2.638 1.225 3.28.937.102-.728.393-1.225.715-1.507-2.498-.284-5.124-1.249-5.124-5.56 0-1.228.439-2.232 1.16-3.019-.116-.285-.503-1.43.11-2.98 0 0 .945-.303 3.094 1.153A10.79 10.79 0 0 1 12 6.18c.956.004 1.919.13 2.818.379 2.148-1.456 3.09-1.153 3.09-1.153.615 1.55.228 2.695.112 2.98.723.787 1.158 1.79 1.158 3.02 0 4.322-2.63 5.272-5.136 5.55.404.35.765 1.04.765 2.095 0 1.512-.014 2.732-.014 3.103 0 .3.203.65.774.54A11.252 11.252 0 0 0 12 .75Z" />
+    </svg>
+  );
+}
+const tabs = [
+  { name: "Code", icon: Code },
+  { name: "Issues", icon: CircleDot },
+  { name: "Pull requests", icon: GitPullRequest },
+  { name: "Actions", icon: PlayCircle },
+  { name: "Projects", icon: Table2 },
+  { name: "Security", icon: Shield },
+  { name: "Insights", icon: ChartNoAxesCombined },
+  { name: "Settings", icon: Settings },
+];
+type Entry = { name: string; path: string; contentType: string };
 
 export default function Repository() {
-  const [tab,setTab]=useState("Code");
-  const [menu,setMenu]=useState("");
-  const [search,setSearch]=useState("");
-  const [path,setPath]=useState("");
-  const [file,setFile]=useState("");
-  const [star,setStar]=useState(false);
-  const [watch,setWatch]=useState("Participating and @mentions");
-  const [toast,setToast]=useState("");
-  const [branch,setBranch]=useState("master");
-  const [protocol,setProtocol]=useState("HTTPS");
-  const [issueTitle,setIssueTitle]=useState("");
-  const [issues,setIssues]=useState<string[]>([]);
-  const [issueSearch,setIssueSearch]=useState("");
-  const searchRef=useRef<HTMLInputElement>(null);
-  const toggle=(name:string)=>setMenu(menu===name?"":name);
-  const notify=(message:string)=>{setToast(message);window.setTimeout(()=>setToast(""),3000);};
-  useEffect(()=>{const handle=(e:KeyboardEvent)=>{if(e.key==="Escape")setMenu("");if(e.key==="/" && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)){e.preventDefault();setMenu("search");setTimeout(()=>searchRef.current?.focus(),20);}};window.addEventListener("keydown",handle);return()=>window.removeEventListener("keydown",handle);},[]);
-  const copy=async(value:string)=>{try{await navigator.clipboard.writeText(value);notify("Copied to clipboard");}catch{notify("Copy: "+value);}};
-  const entries=path ? Array.from(new Set(Object.keys(fileContents).filter(p=>p.startsWith(path+"/")).map(p=>p.slice(path.length+1).split("/")[0]))).map(name=>({name,path:path+"/"+name,contentType:fileContents[path+"/"+name]!==undefined?"file":"directory"})).sort((a,b)=>a.contentType.localeCompare(b.contentType)||a.name.localeCompare(b.name)) : rootItems;
-  const shown=entries.filter(i=>i.name.toLowerCase().includes(search.toLowerCase()));
-  function openEntry(p:string,isDir:boolean){setSearch("");if(isDir){setPath(p);setFile("");}else setFile(p);}
-  return <div className="github-app">
-    <header className="global-header">
-      <button className="icon-button" aria-label="Open navigation" onClick={()=>toggle("navigation")}><Menu size={16}/></button><Link className="github-mark" href="/" aria-label="GitHub home"><Mark/></Link>
-      <div className="header-crumb"><button onClick={()=>toggle("profile")}>patalach112</button><span>/</span><strong>test</strong></div>
-      <div className="header-tools"><button className="global-search" onClick={()=>{setMenu("search");setTimeout(()=>searchRef.current?.focus(),20);}}><Search size={16}/><span>Type <kbd>/</kbd> to search</span><span className="search-end">⌘ K</span></button><div className="header-divider"/><button className="icon-button create-button" aria-label="Create new" onClick={()=>toggle("create")}><Plus size={16}/><ChevronDown size={12}/></button><button className="icon-button optional" aria-label="Issues" onClick={()=>setTab("Issues")}><CircleDot size={16}/></button><button className="icon-button optional" aria-label="Pull requests" onClick={()=>setTab("Pull requests")}><GitPullRequest size={16}/></button><button className="icon-button" aria-label="Notifications" onClick={()=>toggle("notifications")}><Inbox size={16}/></button><button className="avatar avatar-profile" aria-label="Your profile" onClick={()=>toggle("profile")}>p</button></div>
-    </header>
-    <nav className="repo-tabs" aria-label="Repository navigation">{tabs.map(({name,icon:Icon})=><button className={tab===name?"active":""} key={name} onClick={()=>{setTab(name);setFile("");setPath("");}}><Icon size={16}/>{name}{name==="Issues" && issues.length>0 && <span className="count">{issues.length}</span>}</button>)}</nav>
-    <main className="repo-container">
-      <section className="repo-heading"><div className="repo-title"><BookOpen size={20}/><a href="https://github.com/patalach112">patalach112</a><span>/</span><button onClick={()=>{setTab("Code");setFile("");setPath("");}}>test</button><span className="badge">Public</span></div><div className="repo-actions"><button className="button" onClick={()=>toggle("watch")}><Eye size={16}/><span>Watch</span><span className="count">{watch==="All Activity"?1:0}</span><ChevronDown size={12}/></button><button className="button" onClick={()=>toggle("fork")}><GitFork size={16}/><span>Fork</span><span className="count">0</span></button><div className="button-group"><button className="button" onClick={()=>setStar(!star)}><Star size={16} fill={star?"#eac54f":"none"} color={star?"#9a6700":undefined}/>{star?"Starred":"Star"}<span className="count">{star?1:0}</span></button><button className="button" aria-label="Star lists" onClick={()=>toggle("lists")}><ChevronDown size={12}/></button></div></div></section>
-      {tab==="Code" ? <div className="repo-columns"><div className="code-column"><div className="file-toolbar"><div className="branch-controls"><div className="dropdown-host"><button className="button branch-button" onClick={()=>toggle("branch")}><GitBranch size={16}/>{branch}<ChevronDown size={12}/></button>{menu==="branch"&&<div className="dropdown branch-menu"><div className="dropdown-title">Switch branches/tags<button onClick={()=>setMenu("")} aria-label="Close"><X size={14}/></button></div><input placeholder="Find or create a branch…" aria-label="Find branch"/><div className="menu-tabs"><b>Branches</b><span>Tags</span></div>{["master","arena/279e3329-test"].map(b=><button className="menu-item" key={b} onClick={()=>{setBranch(b);setMenu("");}}><Check size={14} visibility={branch===b?"visible":"hidden"}/>{b}</button>)}</div>}</div><button className="text-button branches-link" onClick={()=>toggle("branch")}><GitBranch size={16}/><b>1</b> Branch</button><button className="text-button branches-link" onClick={()=>notify("This repository has no tags")}><Tag size={16}/><b>0</b> Tags</button></div><div className="file-toolbar-right"><div className="file-search"><Search size={16}/><input aria-label="Go to file" placeholder="Go to file" value={search} onChange={e=>setSearch(e.target.value)}/><kbd>t</kbd></div><div className="dropdown-host"><button className="button add-file" onClick={()=>toggle("add")} >Add file<ChevronDown size={12}/></button>{menu==="add"&&<div className="dropdown right"><a className="menu-item" href="https://github.com/patalach112/test/new/master"><Plus size={16}/>Create new file</a><a className="menu-item" href="https://github.com/patalach112/test/upload/master"><File size={16}/>Upload files</a></div>}</div><div className="dropdown-host"><button className="button green" onClick={()=>toggle("code")}><Code size={16}/>Code<ChevronDown size={12}/></button>{menu==="code"&&<div className="dropdown clone-menu right"><div className="dropdown-title"><span><Terminal size={16}/>Clone</span><button onClick={()=>setMenu("")} aria-label="Close"><X size={16}/></button></div><div className="clone-body"><div className="menu-tabs">{["HTTPS","SSH","GitHub CLI"].map(p=><button key={p} className={protocol===p?"selected":""} onClick={()=>setProtocol(p)}>{p}</button>)}</div><div className="clone-input"><input readOnly value={protocol==="HTTPS"?"https://github.com/patalach112/test.git":protocol==="SSH"?"git@github.com:patalach112/test.git":"gh repo clone patalach112/test"}/><button aria-label="Copy clone URL" onClick={()=>copy(protocol==="HTTPS"?"https://github.com/patalach112/test.git":protocol==="SSH"?"git@github.com:patalach112/test.git":"gh repo clone patalach112/test")}><Copy size={16}/></button></div><p>Use Git or checkout with SVN using the web URL.</p></div><a className="menu-item" href="https://desktop.github.com"><Monitor size={16}/>Open with GitHub Desktop<ExternalLink size={14}/></a><a className="menu-item" href="https://github.com/patalach112/test/archive/refs/heads/master.zip"><Download size={16}/>Download ZIP</a></div>}</div></div></div>
-      {(path||file)&&<div className="path-breadcrumb"><button onClick={()=>{setPath("");setFile("");}}>test</button><span>/</span>{file||path}<button className="back-link" onClick={()=>{setPath("");setFile("");}}><ArrowLeft size={14}/>Back to root</button></div>}
-      <div className="file-panel"><div className="commit-bar"><div className="avatar commit-avatar">p</div><strong>patalach112</strong><button onClick={()=>toggle("commit")}>Initial commit</button><div className="commit-meta"><span>f60a3b9</span><span>today</span><button onClick={()=>toggle("commit")}><History size={16}/><b>1</b><span className="commits-label">Commit</span></button></div></div>
-      {file ? <><div className="file-detail-header"><span>{(fileContents[file]||"").split("\n").length} lines · {fileContents[file]?.length||0} Bytes</span><button className="button" onClick={()=>copy(fileContents[file]||"")}>Copy<Copy size={14}/></button></div><pre className="source-code">{(fileContents[file]||"This file is available in the original repository.").split("\n").map((line,i)=><div key={i}><span className="line-number">{i+1}</span><code>{line||" "}</code></div>)}</pre></> : <>{path&&<button className="file-row parent-row" onClick={()=>setPath("")}>..</button>}{shown.map(item=><button className="file-row" key={item.path} onClick={()=>openEntry(item.path,item.contentType==="directory")}><span className="file-name">{item.contentType==="directory"?<Folder size={16} fill="#54aeff" color="#54aeff"/>:<File size={16}/>}<span>{item.name}</span></span><span className="file-message">Initial commit</span><span className="file-time">today</span></button>)}{shown.length===0&&<div className="empty-files">No files found{path&&<p>Browse this directory on <a href={`https://github.com/patalach112/test/tree/master/${path}`}>GitHub <ExternalLink size={12}/></a></p>}</div>}</>}
+  const [liveReadme, setLiveReadme] = useState("");
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/repository?path=README.md", { signal: controller.signal })
+      .then(async (r) => {
+        if (r.ok) {
+          const result = await r.json();
+          setLiveReadme(result.content);
+        }
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+  const [rootItems, setRootItems] = useState<Entry[]>(data.items);
+  const [directoryItems, setDirectoryItems] = useState<Entry[]>([]);
+  const [fileContents, setFileContents] = useState<Record<string, string>>(
+    data.files,
+  );
+  const [repositoryState, setRepositoryState] = useState("loading");
+  const [contentLoading, setContentLoading] = useState(false);
+  const [contentError, setContentError] = useState("");
+  const navigationId = useRef(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/repository", { signal: controller.signal })
+      .then(async (r) => {
+        if (!r.ok) throw new Error();
+        const result = await r.json();
+        setRootItems(result.items);
+        setRepositoryState("live");
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setRepositoryState("offline");
+      });
+    return () => controller.abort();
+  }, []);
+  const [tab, setTab] = useState("Code");
+  const [menu, setMenu] = useState("");
+  const [search, setSearch] = useState("");
+  const [path, setPath] = useState("");
+  const [file, setFile] = useState("");
+  const [star, setStar] = useState(false);
+  const [watch, setWatch] = useState("Participating and @mentions");
+  const [toast, setToast] = useState("");
+  const [branch, setBranch] = useState("master");
+  const [protocol, setProtocol] = useState("HTTPS");
+  const [issueTitle, setIssueTitle] = useState("");
+  const [issues, setIssues] = useState<string[]>([]);
+  const [issueSearch, setIssueSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const toggle = (name: string) => setMenu(menu === name ? "" : name);
+  const notify = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 3000);
+  };
+  useEffect(() => {
+    const handle = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenu("");
+      if (
+        e.key === "/" &&
+        !(e.target instanceof HTMLInputElement) &&
+        !(e.target instanceof HTMLTextAreaElement)
+      ) {
+        e.preventDefault();
+        setMenu("search");
+        setTimeout(() => searchRef.current?.focus(), 20);
+      }
+    };
+    window.addEventListener("keydown", handle);
+    return () => window.removeEventListener("keydown", handle);
+  }, []);
+  const copy = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      notify("Copied to clipboard");
+    } catch {
+      notify("Copy: " + value);
+    }
+  };
+  const entries = path ? directoryItems : rootItems;
+  const shown = entries.filter((i) =>
+    i.name.toLowerCase().includes(search.toLowerCase()),
+  );
+  async function openEntry(p: string, isDir: boolean) {
+    const id = ++navigationId.current;
+    setSearch("");
+    setContentError("");
+    setContentLoading(true);
+    if (isDir) {
+      setPath(p);
+      setFile("");
+      setDirectoryItems([]);
+    } else {
+      setFile(p);
+    }
+    try {
+      const response = await fetch(
+        `/api/repository?path=${encodeURIComponent(p)}`,
+      );
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.error || "Unable to load content");
+      if (id !== navigationId.current) return;
+      if (isDir) setDirectoryItems(result.items);
+      else
+        setFileContents((previous) => ({ ...previous, [p]: result.content }));
+    } catch (error) {
+      if (id === navigationId.current)
+        setContentError(
+          error instanceof Error ? error.message : "Unable to load content",
+        );
+    } finally {
+      if (id === navigationId.current) setContentLoading(false);
+    }
+  }
+  return (
+    <div className="github-app">
+      <header className="global-header">
+        <button
+          className="icon-button"
+          aria-label="Open navigation"
+          onClick={() => toggle("navigation")}
+        >
+          <Menu size={16} />
+        </button>
+        <Link className="github-mark" href="/" aria-label="GitHub home">
+          <Mark />
+        </Link>
+        <div className="header-crumb">
+          <button onClick={() => toggle("profile")}>patalach112</button>
+          <span>/</span>
+          <strong>test</strong>
+        </div>
+        <div className="header-tools">
+          <button
+            className="global-search"
+            onClick={() => {
+              setMenu("search");
+              setTimeout(() => searchRef.current?.focus(), 20);
+            }}
+          >
+            <Search size={16} />
+            <span>
+              Type <kbd>/</kbd> to search
+            </span>
+            <span className="search-end">⌘ K</span>
+          </button>
+          <div className="header-divider" />
+          <button
+            className="icon-button create-button"
+            aria-label="Create new"
+            onClick={() => toggle("create")}
+          >
+            <Plus size={16} />
+            <ChevronDown size={12} />
+          </button>
+          <button
+            className="icon-button optional"
+            aria-label="Issues"
+            onClick={() => setTab("Issues")}
+          >
+            <CircleDot size={16} />
+          </button>
+          <button
+            className="icon-button optional"
+            aria-label="Pull requests"
+            onClick={() => setTab("Pull requests")}
+          >
+            <GitPullRequest size={16} />
+          </button>
+          <button
+            className="icon-button"
+            aria-label="Notifications"
+            onClick={() => toggle("notifications")}
+          >
+            <Inbox size={16} />
+          </button>
+          <AccountMenu />
+        </div>
+      </header>
+      <nav className="repo-tabs" aria-label="Repository navigation">
+        {tabs.map(({ name, icon: Icon }) => (
+          <button
+            className={tab === name ? "active" : ""}
+            key={name}
+            onClick={() => {
+              setTab(name);
+              setFile("");
+              setPath("");
+            }}
+          >
+            <Icon size={16} />
+            {name}
+            {name === "Issues" && issues.length > 0 && (
+              <span className="count">{issues.length}</span>
+            )}
+          </button>
+        ))}
+      </nav>
+      <div className="workspace-status">
+        <span className={`connection-dot ${repositoryState}`} />
+        <span>
+          {repositoryState === "live"
+            ? "Live public repository"
+            : repositoryState === "offline"
+              ? "Offline · showing repository snapshot"
+              : "Connecting to repository…"}
+        </span>
+        <span className="workspace-status-note">
+          Independent workspace · local demo controls
+        </span>
       </div>
-      {!file&&!path&&<section className="readme-panel"><div className="readme-tabs"><span className="readme-active"><List size={16}/>README</span><button onClick={()=>setFile("LICENSE")}><Scale size={16}/>MIT license</button><button onClick={()=>setFile("SECURITY.md")}><Shield size={16}/>Security</button><button className="readme-edit" aria-label="View README source" onClick={()=>setFile("README.md")}><Code size={16}/></button></div><div className="markdown-body" dangerouslySetInnerHTML={{__html:readme}}/></section>}
-      </div><aside className="repo-sidebar"><section><h2>About <button aria-label="About repository" onClick={()=>notify("A public repository by patalach112")}><Settings size={16}/></button></h2><p className="no-description">No description, website, or topics provided.</p><button onClick={()=>document.querySelector(".readme-panel")?.scrollIntoView({behavior:"smooth"})}><BookOpen size={16}/>Readme</button><button onClick={()=>setFile("LICENSE")}><Scale size={16}/>MIT license</button><button onClick={()=>setTab("Security")}><Shield size={16}/>Security policy</button><button onClick={()=>setTab("Insights")}><History size={16}/>Activity</button><button onClick={()=>setStar(!star)}><Star size={16}/><strong>{star?1:0}</strong> stars</button><button onClick={()=>toggle("watch")}><Eye size={16}/><strong>{watch==="All Activity"?1:0}</strong> watching</button><button onClick={()=>toggle("fork")}><GitFork size={16}/><strong>0</strong> forks</button><a className="muted-link" href="https://github.com/contact/report-abuse?report=patalach112%2Ftest">Report repository</a></section><section><h2>Releases</h2><p>No releases published</p><a href="https://github.com/patalach112/test/releases/new">Create a new release</a></section><section><h2>Packages</h2><p>No packages published</p><a href="https://github.com/features/packages">Publish your first package</a></section><section><h2>Languages</h2><div className="language-bar"><span/><span/><span/></div><div className="languages"><span><i className="ts-dot"/><b>TypeScript</b> 64.8%</span><span><i className="css-dot"/><b>CSS</b> 28.1%</span><span><i className="docker-dot"/><b>Dockerfile</b> 7.1%</span></div></section><div className="suggestion"><Heart size={16}/><span>Build something great, together.</span></div></aside></div> : <section className="tab-content">
-      {(tab==="Issues"||tab==="Pull requests")?<><div className="issues-toolbar"><div className="issue-filter"><Search size={16}/><input aria-label="Search issues" placeholder={`Search all ${tab.toLowerCase()}`} value={issueSearch} onChange={e=>setIssueSearch(e.target.value)}/></div><button className="button green" onClick={()=>setMenu(tab==="Issues"?"new-issue":"new-pr")}>New {tab==="Issues"?"issue":"pull request"}</button></div><div className="issues-panel"><div className="issues-panel-heading"><CircleDot size={16}/><strong>{tab==="Issues"?issues.length:0} Open</strong><Check size={16}/>0 Closed</div>{tab==="Issues"&&issues.length>0?issues.filter(i=>i.toLowerCase().includes(issueSearch.toLowerCase())).map((title,i)=><div className="issue-row" key={i}><CircleDot size={20}/><div><h3>{title}</h3><p>#{i+1} opened just now by patalach112</p></div></div>):<div className="empty-state">{tab==="Issues"?<CircleDot size={32}/>:<GitPullRequest size={32}/>}<h2>{tab==="Issues"?"Welcome to issues!":"Welcome to pull requests!"}</h2><p>{tab==="Issues"?"Issues are used to track todos, bugs, feature requests, and more.":"Pull requests help you collaborate on code with other people."}<br/>Get started by creating your first {tab==="Issues"?"issue":"pull request"}.</p></div>}</div></>:<div className="empty-state feature-state">{tab==="Actions"?<PlayCircle size={42}/>:tab==="Security"?<Shield size={42}/>:tab==="Projects"?<Table2 size={42}/>:tab==="Insights"?<ChartNoAxesCombined size={42}/>:<Settings size={42}/>}<h1>{tab==="Actions"?"Get started with GitHub Actions":tab==="Security"?"Keep your repository secure":tab==="Projects"?"Welcome to projects":tab==="Insights"?"Repository activity":"Repository settings"}</h1><p>{tab==="Actions"?"Build, test, and deploy your code. Make code reviews, branch management, and issue triaging work the way you want.":tab==="Security"?"View the security policy and help protect this repository from vulnerabilities.":tab==="Projects"?"Organize your work with a flexible project board.":tab==="Insights"?"1 commit · 1 branch · 1 contributor":"Manage access, branches, and integrations on GitHub."}</p><a className="button" href={`https://github.com/patalach112/test/${tab.toLowerCase()}`}>View {tab.toLowerCase()} on GitHub<ExternalLink size={14}/></a>{tab==="Security"&&<button className="text-button" onClick={()=>{setTab("Code");setFile("SECURITY.md");}}>Read security policy</button>}</div>}
-      </section>}
-    </main>
-    <footer><Mark small/><span>© 2026 GitHub, Inc.</span>{["Terms","Privacy","Security","Status","Community","Docs","Contact"].map(l=><a key={l} href={l==="Docs"?"https://docs.github.com":`https://github.com/${l.toLowerCase()}`}>{l}</a>)}<button onClick={()=>toggle("cookies")}>Manage cookies</button><button onClick={()=>toggle("cookies")}>Do not share my personal information</button></footer>
-    {menu&&!["branch","code","add"].includes(menu)&&<div className="modal-backdrop" onClick={()=>setMenu("")}><section role="dialog" aria-modal="true" aria-label={menu} className={`dialog ${menu==="navigation"?"navigation-dialog":""} ${menu==="search"?"search-dialog":""}`} onClick={e=>e.stopPropagation()}><div className="dialog-title"><strong>{menu==="search"?"Search GitHub":menu==="watch"?"Notifications":menu==="new-issue"?"Create a new issue":menu==="navigation"?"GitHub":menu==="fork"?"Create a new fork":menu==="profile"?"patalach112":menu==="notifications"?"Your notifications":menu==="commit"?"Initial commit":menu==="cookies"?"Cookie preferences":menu==="lists"?"Your lists":menu==="new-pr"?"Compare changes":"Create new"}</strong><button className="icon-button" aria-label="Close dialog" onClick={()=>setMenu("")}><X size={18}/></button></div>
-    {menu==="search"?<><div className="dialog-search"><Search size={18}/><input ref={searchRef} placeholder="Search files in patalach112/test" value={search} onChange={e=>setSearch(e.target.value)}/><kbd>ESC</kbd></div><div className="search-results">{rootItems.filter(i=>!search||i.name.toLowerCase().includes(search.toLowerCase())).slice(0,8).map(i=><button className="menu-item" key={i.path} onClick={()=>{setTab("Code");openEntry(i.path,i.contentType==="directory");setMenu("");}}>{i.contentType==="directory"?<Folder size={16}/>:<File size={16}/>}<span>patalach112 / test / <strong>{i.name}</strong></span></button>)}</div><p className="dialog-hint">Search and jump to a file in this repository.</p></>:menu==="watch"?<>{["Participating and @mentions","All Activity","Ignore"].map((w,i)=><button key={w} className="watch-option" onClick={()=>{setWatch(w);setMenu("");}}><span className={`radio ${watch===w?"checked":""}`}/><span><strong>{w}</strong><small>{["Only receive notifications from this repository when participating or @mentioned.","Be notified of all conversations in this repository.","Never be notified."][i]}</small></span></button>)}</>:menu==="new-issue"?<form className="dialog-body" onSubmit={e=>{e.preventDefault();if(issueTitle.trim()){setIssues([...issues,issueTitle.trim()]);setIssueTitle("");setMenu("");}}}><label htmlFor="title">Add a title</label><input id="title" placeholder="Title" required value={issueTitle} onChange={e=>setIssueTitle(e.target.value)}/><label htmlFor="description">Add a description</label><textarea id="description" placeholder="Type your description here…" rows={6}/><p className="muted">This issue is saved locally for this demo.</p><button className="button green" type="submit">Create issue</button></form>:menu==="navigation"?<div className="navigation-items">{[{label:"Home",icon:BookOpen},{label:"Issues",icon:CircleDot},{label:"Pull requests",icon:GitPullRequest},{label:"Projects",icon:Table2},{label:"Discussions",icon:Users}].map(({label,icon:Icon})=><button className="menu-item" key={label} onClick={()=>{setTab(label==="Home"?"Code":label);setMenu("");}}><Icon size={18}/>{label}</button>)}<hr/><a className="menu-item" href="https://github.com/explore"><ExternalLink size={18}/>Explore</a><a className="menu-item" href="https://github.com/marketplace"><Table2 size={18}/>Marketplace</a></div>:menu==="profile"?<div className="dialog-body"><div className="profile-card"><div className="avatar">p</div><strong>patalach112</strong></div><a className="menu-item" href="https://github.com/patalach112"><Users size={16}/>Your profile</a><button className="menu-item" onClick={()=>{setTab("Code");setMenu("");}}><BookOpen size={16}/>Your repositories</button><a className="menu-item" href="https://github.com/settings/profile"><Settings size={16}/>Settings</a><p className="muted">Local interface preview · Not signed into GitHub</p></div>:menu==="create"?<div className="dialog-body">{["New repository","Import repository","New codespace","New gist","New organization"].map((l,i)=><a className="menu-item" href={["https://github.com/new","https://github.com/new/import","https://github.com/codespaces/new","https://gist.github.com","https://github.com/organizations/plan"][i]} key={l}><Plus size={16}/>{l}<ExternalLink size={14}/></a>)}</div>:menu==="notifications"?<div className="empty-state"><Bell size={36}/><h2>You’re all caught up!</h2><p>You have no new notifications.</p></div>:menu==="commit"?<div className="dialog-body"><p><strong>patalach112</strong> committed today</p><h2>Initial commit</h2><code>f60a3b9ca4301798a5aeeee6561e411dab447eb6</code><p>28 files added to master</p><a className="button" href="https://github.com/patalach112/test/commit/f60a3b9ca4301798a5aeeee6561e411dab447eb6">View commit<ExternalLink size={14}/></a></div>:menu==="cookies"?<div className="dialog-body"><p>This local preview uses no tracking or advertising cookies.</p><button className="button green" onClick={()=>{setMenu("");notify("Preferences saved");}}>Save preferences</button></div>:menu==="lists"?<div className="dialog-body"><p>Save this repository to your stars.</p><button className="button" onClick={()=>{setStar(true);setMenu("");notify("Added to starred repositories");}}><Star size={16}/>Star repository</button></div>:<div className="dialog-body"><p>{menu==="fork"?"A fork is a copy of a repository. Create your own copy of patalach112/test on GitHub.":"Choose a base branch and compare your changes on GitHub."}</p><a className="button green" href={`https://github.com/patalach112/test/${menu==="fork"?"fork":"compare"}`}>{menu==="fork"?"Continue on GitHub":"Compare on GitHub"}<ExternalLink size={14}/></a></div>}
-    </section></div>}
-    {toast&&<div className="toast" role="status"><Check size={18}/>{toast}<button onClick={()=>setToast("")} aria-label="Dismiss"><X size={14}/></button></div>}
-  </div>;
+      <main className="repo-container">
+        <section className="repo-heading">
+          <div className="repo-title">
+            <BookOpen size={20} />
+            <a href="https://github.com/patalach112">patalach112</a>
+            <span>/</span>
+            <button
+              onClick={() => {
+                setTab("Code");
+                setFile("");
+                setPath("");
+              }}
+            >
+              test
+            </button>
+            <span className="badge">Public</span>
+          </div>
+          <div className="repo-actions">
+            <button className="button" onClick={() => toggle("watch")}>
+              <Eye size={16} />
+              <span>Watch</span>
+              <span className="count">{watch === "All Activity" ? 1 : 0}</span>
+              <ChevronDown size={12} />
+            </button>
+            <button className="button" onClick={() => toggle("fork")}>
+              <GitFork size={16} />
+              <span>Fork</span>
+              <span className="count">0</span>
+            </button>
+            <div className="button-group">
+              <button className="button" onClick={() => setStar(!star)}>
+                <Star
+                  size={16}
+                  fill={star ? "#eac54f" : "none"}
+                  color={star ? "#9a6700" : undefined}
+                />
+                {star ? "Starred" : "Star"}
+                <span className="count">{star ? 1 : 0}</span>
+              </button>
+              <button
+                className="button"
+                aria-label="Star lists"
+                onClick={() => toggle("lists")}
+              >
+                <ChevronDown size={12} />
+              </button>
+            </div>
+          </div>
+        </section>
+        {tab === "Code" ? (
+          <div className="repo-columns">
+            <div className="code-column">
+              <div className="file-toolbar">
+                <div className="branch-controls">
+                  <div className="dropdown-host">
+                    <button
+                      className="button branch-button"
+                      onClick={() => toggle("branch")}
+                    >
+                      <GitBranch size={16} />
+                      {branch}
+                      <ChevronDown size={12} />
+                    </button>
+                    {menu === "branch" && (
+                      <div className="dropdown branch-menu">
+                        <div className="dropdown-title">
+                          Switch branches/tags
+                          <button
+                            onClick={() => setMenu("")}
+                            aria-label="Close"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                        <input
+                          placeholder="Find or create a branch…"
+                          aria-label="Find branch"
+                        />
+                        <div className="menu-tabs">
+                          <b>Branches</b>
+                          <span>Tags</span>
+                        </div>
+                        {["master"].map((b) => (
+                          <button
+                            className="menu-item"
+                            key={b}
+                            onClick={() => {
+                              setBranch(b);
+                              setMenu("");
+                            }}
+                          >
+                            <Check
+                              size={14}
+                              visibility={branch === b ? "visible" : "hidden"}
+                            />
+                            {b}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    className="text-button branches-link"
+                    onClick={() => toggle("branch")}
+                  >
+                    <GitBranch size={16} />
+                    <b>1</b> Branch
+                  </button>
+                  <button
+                    className="text-button branches-link"
+                    onClick={() => notify("This repository has no tags")}
+                  >
+                    <Tag size={16} />
+                    <b>0</b> Tags
+                  </button>
+                </div>
+                <div className="file-toolbar-right">
+                  <div className="file-search">
+                    <Search size={16} />
+                    <input
+                      aria-label="Go to file"
+                      placeholder="Go to file"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                    <kbd>t</kbd>
+                  </div>
+                  <div className="dropdown-host">
+                    <button
+                      className="button add-file"
+                      onClick={() => toggle("add")}
+                    >
+                      Add file
+                      <ChevronDown size={12} />
+                    </button>
+                    {menu === "add" && (
+                      <div className="dropdown right">
+                        <a
+                          className="menu-item"
+                          href="https://github.com/patalach112/test/new/master"
+                        >
+                          <Plus size={16} />
+                          Create new file
+                        </a>
+                        <a
+                          className="menu-item"
+                          href="https://github.com/patalach112/test/upload/master"
+                        >
+                          <File size={16} />
+                          Upload files
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  <div className="dropdown-host">
+                    <button
+                      className="button green"
+                      onClick={() => toggle("code")}
+                    >
+                      <Code size={16} />
+                      Code
+                      <ChevronDown size={12} />
+                    </button>
+                    {menu === "code" && (
+                      <div className="dropdown clone-menu right">
+                        <div className="dropdown-title">
+                          <span>
+                            <Terminal size={16} />
+                            Clone
+                          </span>
+                          <button
+                            onClick={() => setMenu("")}
+                            aria-label="Close"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                        <div className="clone-body">
+                          <div className="menu-tabs">
+                            {["HTTPS", "SSH", "GitHub CLI"].map((p) => (
+                              <button
+                                key={p}
+                                className={protocol === p ? "selected" : ""}
+                                onClick={() => setProtocol(p)}
+                              >
+                                {p}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="clone-input">
+                            <input
+                              readOnly
+                              value={
+                                protocol === "HTTPS"
+                                  ? "https://github.com/patalach112/test.git"
+                                  : protocol === "SSH"
+                                    ? "git@github.com:patalach112/test.git"
+                                    : "gh repo clone patalach112/test"
+                              }
+                            />
+                            <button
+                              aria-label="Copy clone URL"
+                              onClick={() =>
+                                copy(
+                                  protocol === "HTTPS"
+                                    ? "https://github.com/patalach112/test.git"
+                                    : protocol === "SSH"
+                                      ? "git@github.com:patalach112/test.git"
+                                      : "gh repo clone patalach112/test",
+                                )
+                              }
+                            >
+                              <Copy size={16} />
+                            </button>
+                          </div>
+                          <p>Use Git or checkout with SVN using the web URL.</p>
+                        </div>
+                        <a
+                          className="menu-item"
+                          href="https://desktop.github.com"
+                        >
+                          <Monitor size={16} />
+                          Open with GitHub Desktop
+                          <ExternalLink size={14} />
+                        </a>
+                        <a
+                          className="menu-item"
+                          href="https://github.com/patalach112/test/archive/refs/heads/master.zip"
+                        >
+                          <Download size={16} />
+                          Download ZIP
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {(path || file) && (
+                <div className="path-breadcrumb">
+                  <button
+                    onClick={() => {
+                      setPath("");
+                      setFile("");
+                    }}
+                  >
+                    test
+                  </button>
+                  <span>/</span>
+                  {file || path}
+                  <button
+                    className="back-link"
+                    onClick={() => {
+                      setPath("");
+                      setFile("");
+                    }}
+                  >
+                    <ArrowLeft size={14} />
+                    Back to root
+                  </button>
+                </div>
+              )}
+              {contentLoading && (
+                <div className="content-status" role="status">
+                  Loading repository content…
+                </div>
+              )}
+              {contentError && (
+                <div className="content-status error" role="alert">
+                  {contentError}{" "}
+                  {file && fileContents[file] !== undefined
+                    ? "Showing cached content."
+                    : ""}
+                  <button onClick={() => openEntry(file || path, !file)}>
+                    Retry
+                  </button>
+                </div>
+              )}
+              <div className="file-panel">
+                <div className="commit-bar">
+                  <div className="avatar commit-avatar">p</div>
+                  <strong>patalach112</strong>
+                  <button onClick={() => toggle("commit")}>
+                    Initial commit
+                  </button>
+                  <div className="commit-meta">
+                    <span>f60a3b9</span>
+                    <span>Initial snapshot</span>
+                    <button onClick={() => toggle("commit")}>
+                      <History size={16} />
+                      <b>1</b>
+                      <span className="commits-label">Commit</span>
+                    </button>
+                  </div>
+                </div>
+                {file ? (
+                  <>
+                    <div className="file-detail-header">
+                      <span>
+                        {(fileContents[file] || "").split("\n").length} lines ·{" "}
+                        {fileContents[file]?.length || 0} Bytes
+                      </span>
+                      <button
+                        className="button"
+                        onClick={() => copy(fileContents[file] || "")}
+                      >
+                        Copy
+                        <Copy size={14} />
+                      </button>
+                    </div>
+                    <pre className="source-code">
+                      {(
+                        fileContents[file] ||
+                        "This file is available in the original repository."
+                      )
+                        .split("\n")
+                        .map((line, i) => (
+                          <div key={i}>
+                            <span className="line-number">{i + 1}</span>
+                            <code>{line || " "}</code>
+                          </div>
+                        ))}
+                    </pre>
+                  </>
+                ) : (
+                  <>
+                    {path && (
+                      <button
+                        className="file-row parent-row"
+                        onClick={() => setPath("")}
+                      >
+                        ..
+                      </button>
+                    )}
+                    {shown.map((item) => (
+                      <button
+                        className="file-row"
+                        key={item.path}
+                        onClick={() =>
+                          openEntry(item.path, item.contentType === "directory")
+                        }
+                      >
+                        <span className="file-name">
+                          {item.contentType === "directory" ? (
+                            <Folder size={16} fill="#54aeff" color="#54aeff" />
+                          ) : (
+                            <File size={16} />
+                          )}
+                          <span>{item.name}</span>
+                        </span>
+                        <span className="file-message">
+                          {repositoryState === "live"
+                            ? "View file contents"
+                            : "Initial commit"}
+                        </span>
+                        <span className="file-time">
+                          {repositoryState === "live" ? "" : "snapshot"}
+                        </span>
+                      </button>
+                    ))}
+                    {shown.length === 0 && (
+                      <div className="empty-files">
+                        No files found
+                        {path && (
+                          <p>
+                            Browse this directory on{" "}
+                            <a
+                              href={`https://github.com/patalach112/test/tree/master/${path}`}
+                            >
+                              GitHub <ExternalLink size={12} />
+                            </a>
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              {!file && !path && (
+                <section className="readme-panel">
+                  <div className="readme-tabs">
+                    <span className="readme-active">
+                      <List size={16} />
+                      README
+                    </span>
+                    <button onClick={() => openEntry("LICENSE", false)}>
+                      <Scale size={16} />
+                      MIT license
+                    </button>
+                    <button onClick={() => openEntry("SECURITY.md", false)}>
+                      <Shield size={16} />
+                      Security
+                    </button>
+                    <button
+                      className="readme-edit"
+                      aria-label="View README source"
+                      onClick={() => openEntry("README.md", false)}
+                    >
+                      <Code size={16} />
+                    </button>
+                  </div>
+                  {liveReadme ? (
+                    <div className="markdown-body">
+                      <Markdown skipHtml components={{ img: () => null }}>
+                        {liveReadme}
+                      </Markdown>
+                    </div>
+                  ) : (
+                    <div
+                      className="markdown-body"
+                      dangerouslySetInnerHTML={{ __html: readme }}
+                    />
+                  )}
+                </section>
+              )}
+            </div>
+            <aside className="repo-sidebar">
+              <section>
+                <h2>
+                  About{" "}
+                  <button
+                    aria-label="About repository"
+                    onClick={() => notify("A public repository by patalach112")}
+                  >
+                    <Settings size={16} />
+                  </button>
+                </h2>
+                <p className="no-description">
+                  No description, website, or topics provided.
+                </p>
+                <button
+                  onClick={() =>
+                    document
+                      .querySelector(".readme-panel")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                >
+                  <BookOpen size={16} />
+                  Readme
+                </button>
+                <button onClick={() => openEntry("LICENSE", false)}>
+                  <Scale size={16} />
+                  MIT license
+                </button>
+                <button onClick={() => setTab("Security")}>
+                  <Shield size={16} />
+                  Security policy
+                </button>
+                <button onClick={() => setTab("Insights")}>
+                  <History size={16} />
+                  Activity
+                </button>
+                <button onClick={() => setStar(!star)}>
+                  <Star size={16} />
+                  <strong>{star ? 1 : 0}</strong> stars
+                </button>
+                <button onClick={() => toggle("watch")}>
+                  <Eye size={16} />
+                  <strong>{watch === "All Activity" ? 1 : 0}</strong> watching
+                </button>
+                <button onClick={() => toggle("fork")}>
+                  <GitFork size={16} />
+                  <strong>0</strong> forks
+                </button>
+                <a
+                  className="muted-link"
+                  href="https://github.com/contact/report-abuse?report=patalach112%2Ftest"
+                >
+                  Report repository
+                </a>
+              </section>
+              <section>
+                <h2>Releases</h2>
+                <p>No releases published</p>
+                <a href="https://github.com/patalach112/test/releases/new">
+                  Create a new release
+                </a>
+              </section>
+              <section>
+                <h2>Packages</h2>
+                <p>No packages published</p>
+                <a href="https://github.com/features/packages">
+                  Publish your first package
+                </a>
+              </section>
+              <section>
+                <h2>Languages</h2>
+                <div className="language-bar">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <div className="languages">
+                  <span>
+                    <i className="ts-dot" />
+                    <b>TypeScript</b> 64.8%
+                  </span>
+                  <span>
+                    <i className="css-dot" />
+                    <b>CSS</b> 28.1%
+                  </span>
+                  <span>
+                    <i className="docker-dot" />
+                    <b>Dockerfile</b> 7.1%
+                  </span>
+                </div>
+              </section>
+              <div className="suggestion">
+                <Heart size={16} />
+                <span>Build something great, together.</span>
+              </div>
+            </aside>
+          </div>
+        ) : (
+          <section className="tab-content">
+            {tab === "Issues" || tab === "Pull requests" ? (
+              <>
+                <div className="issues-toolbar">
+                  <div className="issue-filter">
+                    <Search size={16} />
+                    <input
+                      aria-label="Search issues"
+                      placeholder={`Search all ${tab.toLowerCase()}`}
+                      value={issueSearch}
+                      onChange={(e) => setIssueSearch(e.target.value)}
+                    />
+                  </div>
+                  <button
+                    className="button green"
+                    onClick={() =>
+                      setMenu(tab === "Issues" ? "new-issue" : "new-pr")
+                    }
+                  >
+                    New {tab === "Issues" ? "issue" : "pull request"}
+                  </button>
+                </div>
+                <div className="issues-panel">
+                  <div className="issues-panel-heading">
+                    <CircleDot size={16} />
+                    <strong>{tab === "Issues" ? issues.length : 0} Open</strong>
+                    <Check size={16} />0 Closed
+                  </div>
+                  {tab === "Issues" && issues.length > 0 ? (
+                    issues
+                      .filter((i) =>
+                        i.toLowerCase().includes(issueSearch.toLowerCase()),
+                      )
+                      .map((title, i) => (
+                        <div className="issue-row" key={i}>
+                          <CircleDot size={20} />
+                          <div>
+                            <h3>{title}</h3>
+                            <p>#{i + 1} opened just now by patalach112</p>
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="empty-state">
+                      {tab === "Issues" ? (
+                        <CircleDot size={32} />
+                      ) : (
+                        <GitPullRequest size={32} />
+                      )}
+                      <h2>
+                        {tab === "Issues"
+                          ? "Welcome to issues!"
+                          : "Welcome to pull requests!"}
+                      </h2>
+                      <p>
+                        {tab === "Issues"
+                          ? "Issues are used to track todos, bugs, feature requests, and more."
+                          : "Pull requests help you collaborate on code with other people."}
+                        <br />
+                        Get started by creating your first{" "}
+                        {tab === "Issues" ? "issue" : "pull request"}.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="empty-state feature-state">
+                {tab === "Actions" ? (
+                  <PlayCircle size={42} />
+                ) : tab === "Security" ? (
+                  <Shield size={42} />
+                ) : tab === "Projects" ? (
+                  <Table2 size={42} />
+                ) : tab === "Insights" ? (
+                  <ChartNoAxesCombined size={42} />
+                ) : (
+                  <Settings size={42} />
+                )}
+                <h1>
+                  {tab === "Actions"
+                    ? "Get started with GitHub Actions"
+                    : tab === "Security"
+                      ? "Keep your repository secure"
+                      : tab === "Projects"
+                        ? "Welcome to projects"
+                        : tab === "Insights"
+                          ? "Repository activity"
+                          : "Repository settings"}
+                </h1>
+                <p>
+                  {tab === "Actions"
+                    ? "Build, test, and deploy your code. Make code reviews, branch management, and issue triaging work the way you want."
+                    : tab === "Security"
+                      ? "View the security policy and help protect this repository from vulnerabilities."
+                      : tab === "Projects"
+                        ? "Organize your work with a flexible project board."
+                        : tab === "Insights"
+                          ? "1 commit · 1 branch · 1 contributor"
+                          : "Manage access, branches, and integrations on GitHub."}
+                </p>
+                <a
+                  className="button"
+                  href={`https://github.com/patalach112/test/${tab.toLowerCase()}`}
+                >
+                  View {tab.toLowerCase()} on GitHub
+                  <ExternalLink size={14} />
+                </a>
+                {tab === "Security" && (
+                  <button
+                    className="text-button"
+                    onClick={() => {
+                      setTab("Code");
+                      openEntry("SECURITY.md", false);
+                    }}
+                  >
+                    Read security policy
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+      </main>
+      <footer>
+        <Mark small />
+        <span>© 2026 GitHub, Inc.</span>
+        {[
+          "Terms",
+          "Privacy",
+          "Security",
+          "Status",
+          "Community",
+          "Docs",
+          "Contact",
+        ].map((l) => (
+          <a
+            key={l}
+            href={
+              l === "Docs"
+                ? "https://docs.github.com"
+                : `https://github.com/${l.toLowerCase()}`
+            }
+          >
+            {l}
+          </a>
+        ))}
+        <button onClick={() => toggle("cookies")}>Manage cookies</button>
+        <button onClick={() => toggle("cookies")}>
+          Do not share my personal information
+        </button>
+      </footer>
+      {menu && !["branch", "code", "add"].includes(menu) && (
+        <div className="modal-backdrop" onClick={() => setMenu("")}>
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label={menu}
+            className={`dialog ${menu === "navigation" ? "navigation-dialog" : ""} ${menu === "search" ? "search-dialog" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="dialog-title">
+              <strong>
+                {menu === "search"
+                  ? "Search GitHub"
+                  : menu === "watch"
+                    ? "Notifications"
+                    : menu === "new-issue"
+                      ? "Create a new issue"
+                      : menu === "navigation"
+                        ? "GitHub"
+                        : menu === "fork"
+                          ? "Create a new fork"
+                          : menu === "profile"
+                            ? "patalach112"
+                            : menu === "notifications"
+                              ? "Your notifications"
+                              : menu === "commit"
+                                ? "Initial commit"
+                                : menu === "cookies"
+                                  ? "Cookie preferences"
+                                  : menu === "lists"
+                                    ? "Your lists"
+                                    : menu === "new-pr"
+                                      ? "Compare changes"
+                                      : "Create new"}
+              </strong>
+              <button
+                className="icon-button"
+                aria-label="Close dialog"
+                onClick={() => setMenu("")}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            {menu === "search" ? (
+              <>
+                <div className="dialog-search">
+                  <Search size={18} />
+                  <input
+                    ref={searchRef}
+                    placeholder="Search files in patalach112/test"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  <kbd>ESC</kbd>
+                </div>
+                <div className="search-results">
+                  {rootItems
+                    .filter(
+                      (i) =>
+                        !search ||
+                        i.name.toLowerCase().includes(search.toLowerCase()),
+                    )
+                    .slice(0, 8)
+                    .map((i) => (
+                      <button
+                        className="menu-item"
+                        key={i.path}
+                        onClick={() => {
+                          setTab("Code");
+                          openEntry(i.path, i.contentType === "directory");
+                          setMenu("");
+                        }}
+                      >
+                        {i.contentType === "directory" ? (
+                          <Folder size={16} />
+                        ) : (
+                          <File size={16} />
+                        )}
+                        <span>
+                          patalach112 / test / <strong>{i.name}</strong>
+                        </span>
+                      </button>
+                    ))}
+                </div>
+                <p className="dialog-hint">
+                  Search and jump to a file in this repository.
+                </p>
+              </>
+            ) : menu === "watch" ? (
+              <>
+                {["Participating and @mentions", "All Activity", "Ignore"].map(
+                  (w, i) => (
+                    <button
+                      key={w}
+                      className="watch-option"
+                      onClick={() => {
+                        setWatch(w);
+                        setMenu("");
+                      }}
+                    >
+                      <span
+                        className={`radio ${watch === w ? "checked" : ""}`}
+                      />
+                      <span>
+                        <strong>{w}</strong>
+                        <small>
+                          {
+                            [
+                              "Only receive notifications from this repository when participating or @mentioned.",
+                              "Be notified of all conversations in this repository.",
+                              "Never be notified.",
+                            ][i]
+                          }
+                        </small>
+                      </span>
+                    </button>
+                  ),
+                )}
+              </>
+            ) : menu === "new-issue" ? (
+              <form
+                className="dialog-body"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (issueTitle.trim()) {
+                    setIssues([...issues, issueTitle.trim()]);
+                    setIssueTitle("");
+                    setMenu("");
+                  }
+                }}
+              >
+                <label htmlFor="title">Add a title</label>
+                <input
+                  id="title"
+                  placeholder="Title"
+                  required
+                  value={issueTitle}
+                  onChange={(e) => setIssueTitle(e.target.value)}
+                />
+                <label htmlFor="description">Add a description</label>
+                <textarea
+                  id="description"
+                  placeholder="Type your description here…"
+                  rows={6}
+                />
+                <p className="muted">
+                  This issue is saved locally for this demo.
+                </p>
+                <button className="button green" type="submit">
+                  Create issue
+                </button>
+              </form>
+            ) : menu === "navigation" ? (
+              <div className="navigation-items">
+                {[
+                  { label: "Home", icon: BookOpen },
+                  { label: "Issues", icon: CircleDot },
+                  { label: "Pull requests", icon: GitPullRequest },
+                  { label: "Projects", icon: Table2 },
+                  { label: "Discussions", icon: Users },
+                ].map(({ label, icon: Icon }) => (
+                  <button
+                    className="menu-item"
+                    key={label}
+                    onClick={() => {
+                      setTab(label === "Home" ? "Code" : label);
+                      setMenu("");
+                    }}
+                  >
+                    <Icon size={18} />
+                    {label}
+                  </button>
+                ))}
+                <hr />
+                <a className="menu-item" href="https://github.com/explore">
+                  <ExternalLink size={18} />
+                  Explore
+                </a>
+                <a className="menu-item" href="https://github.com/marketplace">
+                  <Table2 size={18} />
+                  Marketplace
+                </a>
+              </div>
+            ) : menu === "profile" ? (
+              <div className="dialog-body">
+                <div className="profile-card">
+                  <div className="avatar">p</div>
+                  <strong>patalach112</strong>
+                </div>
+                <a className="menu-item" href="https://github.com/patalach112">
+                  <Users size={16} />
+                  Your profile
+                </a>
+                <button
+                  className="menu-item"
+                  onClick={() => {
+                    setTab("Code");
+                    setMenu("");
+                  }}
+                >
+                  <BookOpen size={16} />
+                  Your repositories
+                </button>
+                <a
+                  className="menu-item"
+                  href="https://github.com/settings/profile"
+                >
+                  <Settings size={16} />
+                  Settings
+                </a>
+                <p className="muted">
+                  Local interface preview · Not signed into GitHub
+                </p>
+              </div>
+            ) : menu === "create" ? (
+              <div className="dialog-body">
+                {[
+                  "New repository",
+                  "Import repository",
+                  "New codespace",
+                  "New gist",
+                  "New organization",
+                ].map((l, i) => (
+                  <a
+                    className="menu-item"
+                    href={
+                      [
+                        "https://github.com/new",
+                        "https://github.com/new/import",
+                        "https://github.com/codespaces/new",
+                        "https://gist.github.com",
+                        "https://github.com/organizations/plan",
+                      ][i]
+                    }
+                    key={l}
+                  >
+                    <Plus size={16} />
+                    {l}
+                    <ExternalLink size={14} />
+                  </a>
+                ))}
+              </div>
+            ) : menu === "notifications" ? (
+              <div className="empty-state">
+                <Bell size={36} />
+                <h2>You’re all caught up!</h2>
+                <p>You have no new notifications.</p>
+              </div>
+            ) : menu === "commit" ? (
+              <div className="dialog-body">
+                <p>
+                  <strong>patalach112</strong> committed today
+                </p>
+                <h2>Initial commit</h2>
+                <code>f60a3b9ca4301798a5aeeee6561e411dab447eb6</code>
+                <p>28 files added to master</p>
+                <a
+                  className="button"
+                  href="https://github.com/patalach112/test/commit/f60a3b9ca4301798a5aeeee6561e411dab447eb6"
+                >
+                  View commit
+                  <ExternalLink size={14} />
+                </a>
+              </div>
+            ) : menu === "cookies" ? (
+              <div className="dialog-body">
+                <p>
+                  This local preview uses no tracking or advertising cookies.
+                </p>
+                <button
+                  className="button green"
+                  onClick={() => {
+                    setMenu("");
+                    notify("Preferences saved");
+                  }}
+                >
+                  Save preferences
+                </button>
+              </div>
+            ) : menu === "lists" ? (
+              <div className="dialog-body">
+                <p>Save this repository to your stars.</p>
+                <button
+                  className="button"
+                  onClick={() => {
+                    setStar(true);
+                    setMenu("");
+                    notify("Added to starred repositories");
+                  }}
+                >
+                  <Star size={16} />
+                  Star repository
+                </button>
+              </div>
+            ) : (
+              <div className="dialog-body">
+                <p>
+                  {menu === "fork"
+                    ? "A fork is a copy of a repository. Create your own copy of patalach112/test on GitHub."
+                    : "Choose a base branch and compare your changes on GitHub."}
+                </p>
+                <a
+                  className="button green"
+                  href={`https://github.com/patalach112/test/${menu === "fork" ? "fork" : "compare"}`}
+                >
+                  {menu === "fork" ? "Continue on GitHub" : "Compare on GitHub"}
+                  <ExternalLink size={14} />
+                </a>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+      {toast && (
+        <div className="toast" role="status">
+          <Check size={18} />
+          {toast}
+          <button onClick={() => setToast("")} aria-label="Dismiss">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
