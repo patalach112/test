@@ -1,0 +1,9 @@
+# Merge the ingress rule into your existing tunnel config.
+# Do not commit your real tunnel credentials.
+tunnel: YOUR_EXISTING_TUNNEL_UUID
+credentials-file: /path/to/YOUR_EXISTING_TUNNEL_UUID.json
+
+ingress:
+  - hostname: firmwarewatch.com
+    service: http://localhost:3000
+  - service: http_status:404

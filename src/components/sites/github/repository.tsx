@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import Markdown from "react-markdown";
+import { Brand } from "@/components/firmwarewatch/brand";
 import { AccountMenu } from "@/components/auth/account-menu";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -195,9 +195,7 @@ export default function Repository() {
         >
           <Menu size={16} />
         </button>
-        <Link className="github-mark" href="/" aria-label="GitHub home">
-          <Mark />
-        </Link>
+        <Brand />
         <div className="header-crumb">
           <button onClick={() => toggle("profile")}>patalach112</button>
           <span>/</span>
@@ -279,7 +277,7 @@ export default function Repository() {
               : "Connecting to repository…"}
         </span>
         <span className="workspace-status-note">
-          Independent workspace · local demo controls
+          FirmwareWatch · Repository preview
         </span>
       </div>
       <main className="repo-container">
@@ -921,7 +919,7 @@ export default function Repository() {
       </main>
       <footer>
         <Mark small />
-        <span>© 2026 GitHub, Inc.</span>
+        <span>© 2026 FirmwareWatch</span>
         {[
           "Terms",
           "Privacy",

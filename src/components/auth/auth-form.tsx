@@ -18,9 +18,13 @@ type Mode = "login" | "signup" | "reset";
 export function AuthForm({
   mode,
   configured,
+  initialEmail = "",
+  recoveryAvailable = true,
 }: {
   mode: Mode;
   configured: boolean;
+  initialEmail?: string;
+  recoveryAvailable?: boolean;
 }) {
   const router = useRouter();
   const [visible, setVisible] = useState(false);
@@ -31,7 +35,7 @@ export function AuthForm({
   const reset = mode === "reset";
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (pending || !configured) return;
+    if (pending || !configured || (reset && !recoveryAvailable)) return;
     const form = new FormData(event.currentTarget);
     setPending(true);
     setError("");
@@ -57,7 +61,7 @@ export function AuthForm({
         );
         return;
       }
-      router.replace("/");
+      router.replace("/dashboard");
       router.refresh();
     } catch {
       setError("Unable to connect. Check your connection and try again.");
@@ -71,7 +75,7 @@ export function AuthForm({
         <aside className="signup-story">
           <Link href="/" className="forge-wordmark">
             <GitBranch size={28} />
-            Forge
+            FirmwareWatch
           </Link>
           <div>
             <span className="eyebrow">YOUR NEXT GREAT IDEA STARTS HERE</span>
@@ -107,7 +111,7 @@ export function AuthForm({
       <div className="auth-main">
         <div className="auth-topline">
           <Link href="/" className="auth-back">
-            ← Back to repository
+            ← Back to home
           </Link>
           <span>
             {signup ? "Already have an account?" : "New here?"}{" "}
@@ -118,7 +122,7 @@ export function AuthForm({
           </span>
         </div>
         <div className="auth-content">
-          <Link href="/" className="auth-logo" aria-label="Forge home">
+          <Link href="/" className="auth-logo" aria-label="FirmwareWatch home">
             <GitBranch size={34} />
           </Link>
           <h1>
@@ -126,19 +130,33 @@ export function AuthForm({
               ? "Create your account"
               : reset
                 ? "Reset your password"
-                : "Sign in to Forge"}
+                : "Sign in to FirmwareWatch"}
           </h1>
           <p className="auth-subtitle">
             {signup
               ? "Your code deserves a home."
               : reset
-                ? "We’ll email you a link to reset your password."
+                ? recoveryAvailable
+                  ? "We’ll email you a link to reset your password."
+                  : "Contact your administrator to recover your account."
                 : "Welcome back. Let’s build something."}
           </p>
           <div className="instance-label">
             <span />
-            Independent GitHub-style workspace · not GitHub.com
+            firmwarewatch.com · Independent developer workspace
           </div>
+          {reset && !recoveryAvailable && (
+            <div className="auth-notice">
+              <AlertCircle size={17} />
+              <div>
+                <strong>Email recovery is not enabled</strong>
+                <p>
+                  Local accounts work, but this server has no mail provider.
+                  Contact the FirmwareWatch administrator for account recovery.
+                </p>
+              </div>
+            </div>
+          )}
           {!configured && (
             <div className="auth-notice">
               <AlertCircle size={17} />
@@ -180,12 +198,15 @@ export function AuthForm({
                   <input
                     id="email"
                     name="email"
+                    defaultValue={initialEmail}
                     type="email"
                     autoComplete="email"
                     placeholder="you@example.com"
                     required
                     maxLength={254}
-                    disabled={!configured || pending}
+                    disabled={
+                      !configured || pending || (reset && !recoveryAvailable)
+                    }
                   />
                   <label htmlFor="username">
                     Username <span>*</span>
@@ -198,7 +219,9 @@ export function AuthForm({
                     required
                     maxLength={39}
                     pattern="[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?"
-                    disabled={!configured || pending}
+                    disabled={
+                      !configured || pending || (reset && !recoveryAvailable)
+                    }
                   />
                   <p className="field-hint">
                     Letters, numbers, and hyphens only.
@@ -217,7 +240,9 @@ export function AuthForm({
                     autoComplete={reset ? "email" : "username"}
                     required
                     maxLength={254}
-                    disabled={!configured || pending}
+                    disabled={
+                      !configured || pending || (reset && !recoveryAvailable)
+                    }
                   />
                 </>
               )}
@@ -242,7 +267,9 @@ export function AuthForm({
                       minLength={signup ? 12 : 1}
                       maxLength={128}
                       required
-                      disabled={!configured || pending}
+                      disabled={
+                        !configured || pending || (reset && !recoveryAvailable)
+                      }
                     />
                     <button
                       type="button"
@@ -262,7 +289,9 @@ export function AuthForm({
               <button
                 className="auth-submit"
                 type="submit"
-                disabled={!configured || pending}
+                disabled={
+                  !configured || pending || (reset && !recoveryAvailable)
+                }
               >
                 {pending ? (
                   <>
@@ -282,14 +311,15 @@ export function AuthForm({
               </button>
               <p className="auth-form-note">
                 {configured
-                  ? "Your credentials are sent securely to this workspace’s server."
+                  ? "Your account belongs to FirmwareWatch, not GitHub."
                   : "Sign-in will be available after the server is configured."}
               </p>
             </form>
           )}
           {!signup && !reset && (
             <div className="auth-create">
-              New to Forge? <Link href="/signup">Create an account</Link>
+              New to FirmwareWatch?{" "}
+              <Link href="/signup">Create an account</Link>
             </div>
           )}
           <p className="auth-bottom-note">
@@ -299,7 +329,7 @@ export function AuthForm({
           </p>
         </div>
         <div className="auth-footer">
-          <span>Forge · Your development workspace</span>
+          <span>FirmwareWatch · Your development workspace</span>
           <Link href="/">Repository</Link>
           <a href="https://docs.github.com" target="_blank" rel="noreferrer">
             Git documentation ↗

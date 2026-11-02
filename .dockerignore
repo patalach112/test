@@ -49,3 +49,8 @@ docker-compose.yml
 README.md
 CHANGELOG.md
 LICENSE
+
+# Never bake user databases or tunnel credentials into images
+data
+deploy
+.env.production

@@ -1,3 +1,4 @@
+import { AuthError, localAuthenticate, localLogout } from "@/lib/local-auth";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -30,7 +31,12 @@ export async function POST(
   const host =
     request.headers.get("x-forwarded-host") || request.headers.get("host");
   try {
-    if (!origin || new URL(origin).host !== host)
+    if (
+      !origin ||
+      (process.env.APP_ORIGIN
+        ? new URL(origin).origin !== new URL(process.env.APP_ORIGIN).origin
+        : new URL(origin).host !== host)
+    )
       return json({ error: "Invalid request origin." }, 403);
   } catch {
     return json({ error: "Invalid request origin." }, 403);
@@ -39,7 +45,8 @@ export async function POST(
   const token = store.get(sessionCookie)?.value;
   if (action === "logout") {
     store.delete(sessionCookie);
-    if (token && authConfigured()) {
+    if (token && !process.env.AUTH_API_URL) localLogout(token);
+    if (token && process.env.AUTH_API_URL) {
       try {
         await authRequest("logout", {
           method: "POST",
@@ -101,28 +108,46 @@ export async function POST(
         ? { username, email, password }
         : { email };
   try {
-    const upstream = await authRequest(action, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    if (!upstream.ok) {
-      if (upstream.status === 429)
+    let result;
+    if (!process.env.AUTH_API_URL) {
+      if (action === "reset")
         return json(
-          { error: "Too many attempts. Please try again later." },
-          429,
+          {
+            error:
+              "Email recovery is not configured for this server. Contact the FirmwareWatch administrator.",
+          },
+          503,
         );
-      return json(
-        {
-          error:
-            action === "login"
-              ? "Unable to sign in. Check your credentials and try again."
-              : "Unable to complete this request. Please try again.",
-        },
-        upstream.status >= 500 ? 502 : 400,
-      );
+      result = await localAuthenticate(action as "login" | "register", {
+        login,
+        username,
+        email,
+        password,
+      });
+    } else {
+      const upstream = await authRequest(action, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      if (!upstream.ok) {
+        if (upstream.status === 429)
+          return json(
+            { error: "Too many attempts. Please try again later." },
+            429,
+          );
+        return json(
+          {
+            error:
+              action === "login"
+                ? "Unable to sign in. Check your credentials and try again."
+                : "Unable to complete this request. Please try again.",
+          },
+          upstream.status >= 500 ? 502 : 400,
+        );
+      }
+      if (action === "reset") return json({ ok: true });
+      result = await upstream.json();
     }
-    if (action === "reset") return json({ ok: true });
-    const result = await upstream.json();
     if (action === "register" && result.requiresVerification === true)
       return json({ requiresVerification: true });
     if (
@@ -142,6 +167,7 @@ export async function POST(
       httpOnly: true,
       sameSite: "lax",
       secure:
+        Boolean(process.env.APP_ORIGIN?.startsWith("https://")) ||
         request.nextUrl.protocol === "https:" ||
         request.headers.get("x-forwarded-proto") === "https",
       path: "/",
@@ -150,11 +176,13 @@ export async function POST(
         : 3600,
     });
     return json({ ok: true });
-  } catch {
+  } catch (error) {
+    if (error instanceof AuthError)
+      return json({ error: error.message }, error.status);
     return json(
       {
         error:
-          "Cannot reach the authentication server. Please try again later.",
+          "Authentication is temporarily unavailable. Please try again later.",
       },
       502,
     );

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "patalach112/test · Forge",
+  metadataBase: new URL(process.env.APP_ORIGIN || "https://firmwarewatch.com"),
+  icons: { icon: "/firmwarewatch.svg" },
+  title: "FirmwareWatch",
   description:
     "An independent dark GitHub-style workspace with live repository browsing.",
 };

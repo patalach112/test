@@ -47,3 +47,10 @@ next-env.d.ts
 
 # Local temp files
 temp/
+
+# Persistent account database (back up outside Git)
+/data/
+
+# Production environment and Cloudflare tunnel credentials
+.env.production
+.cloudflared/
