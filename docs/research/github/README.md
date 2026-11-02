@@ -1,4 +1,8 @@
-# GitHub repository replica
+# GitHub-style workspace
+
+The original light-mode snapshot has been extended with a dark theme, live public repository browsing, and independent account screens. See [auth-integration.md](auth-integration.md) for routes, backend API contract, setup, tests, security boundaries, and remaining limitations.
+
+# Original implementation notes (historical)
 
 Source: https://github.com/patalach112/test (public HTML and embedded repository data inspected).
 Local route: `/` — repository overview, file navigation and client-side repository tabs.
