@@ -47,6 +47,7 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
 ENV NODE_ENV=production
+ENV BUILD_STANDALONE=1
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -92,7 +93,7 @@ ENV HOSTNAME="0.0.0.0"
 COPY --from=builder --chown=node:node /app/public ./public
 
 # Set the correct permission for prerender cache
-RUN mkdir .next
+RUN mkdir .next data && chown node:node data && chmod 700 data
 RUN chown node:node .next
 
 # Automatically leverage output traces to reduce image size

@@ -65,7 +65,7 @@ export function AccountMenu() {
               <span>Signed in as</span>
               <strong>{user.username}</strong>
             </div>
-            <Link className="menu-item" href="/">
+            <Link className="menu-item" href="/dashboard">
               <UserRound size={16} />
               Your workspace
             </Link>

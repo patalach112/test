@@ -1,11 +1,12 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { localUser } from "./local-auth";
 
-export const sessionCookie = "forge_session";
+export const sessionCookie = "firmwarewatch_session";
 export type User = { id: string; username: string; email?: string };
 
 export function authConfigured() {
-  return Boolean(process.env.AUTH_API_URL);
+  return true;
 }
 
 export async function authRequest(action: string, options: RequestInit = {}) {
@@ -40,6 +41,7 @@ export async function authRequest(action: string, options: RequestInit = {}) {
 export async function getUser(): Promise<User | null> {
   const token = (await cookies()).get(sessionCookie)?.value;
   if (!token || !authConfigured()) return null;
+  if (!process.env.AUTH_API_URL) return localUser(token);
   try {
     const response = await authRequest("me", {
       headers: { Authorization: `Bearer ${token}` },
